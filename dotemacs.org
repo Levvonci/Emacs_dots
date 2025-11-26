@@ -1,0 +1,199 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Leonardo Ascenzi
+#+PROPERTY: header-args :tangle dotemacs.el
+
+* Startup
+  #+BEGIN_SRC emacs-lisp
+    (setq os-packages-path "/home/lvnc/.config/emacs/emacs_packages/")
+    (setq vc-follow-symlinks t)
+    (prefer-coding-system 'utf-8-unix)
+    (setq shift-select-mode t)
+    (setq org-support-shift-select t)
+    (setq org-replace-disputed-keys t)
+    (setq-default indent-tabs-mode t)   
+    (setq tab-width 4)
+    (require 'org-tempo)
+
+    (add-to-list 'load-path
+    	 (concat os-packages-path "use-package/"))
+
+  #+END_SRC
+
+* Package
+  #+BEGIN_SRC emacs-lisp
+    (package-initialize)
+    (require 'use-package)
+  #+END_SRC
+  #+BEGIN_SRC emacs-lisp
+      (use-package package
+        :config
+        (setq package-archive-priorities
+    	    '(("melpa-stable" . 2)
+    	      ("MELPA" . 1)
+    	      ("gnu" . 0)))
+
+        (setq package-archives
+    	    '(("melpa-stable" . "https://stable.melpa.org/packages/")
+    	      ("MELPA" . "https://melpa.org/packages/")
+    	      ("gnu" . "https://elpa.gnu.org/packages/")))
+        )	
+  #+END_SRC
+  
+** General
+  #+begin_src emacs-lisp
+    (display-time)
+    (menu-bar-mode -1)
+    (scroll-bar-mode -1)
+    ;; Turn off the toolbar
+    (tool-bar-mode 0)
+    ;; add column number in the main bar
+    (column-number-mode)
+    (global-visual-line-mode)
+  #+end_src
+  
+** Indentation
+  #+begin_src emacs-lisp
+    (setq standard-indent 2)
+    ;; nil value means 'do not set tabs, ever!'
+    (setq tab-stop-list nil)
+    ;;(setq indent-tabs-mode nil)  
+  #+end_src
+  
+** Themes
+  #+BEGIN_SRC emacs-lisp
+    (use-package spacemacs-theme
+      :ensure t
+      :defer t
+      :init
+      (load-theme 'spacemacs-dark t)
+      (set-face-attribute 'default nil :background "#000000"))
+  #+END_SRC
+
+  #+begin_src emacs-lisp
+        ;; Rimuove qualsiasi bordo interno
+    (add-to-list 'default-frame-alist '(internal-border-width . 0))
+    (add-to-list 'initial-frame-alist '(internal-border-width . 0))
+
+    ;; Rimuove spaziature ai bordi (fringe)
+    (set-face-attribute 'fringe nil :background "#000000" :foreground nil)
+    (fringe-mode 0)
+
+    ;; Eliminazione decorazioni della finestra (solo GUI)
+    (add-to-list 'default-frame-alist '(undecorated . t))
+
+    ;; Linea inferiore (modeline) se vuoi renderla più clean
+    (set-face-attribute 'mode-line nil :box nil)
+    (set-face-attribute 'mode-line-inactive nil :box nil)
+  #+end_src
+  #+begin_src emacs-lisp
+            (use-package doom-modeline
+              :ensure t
+    	  :init (doom-modeline-mode 1))
+  #+end_src
+  #+begin_src emacs-lisp
+        (use-package org-bullets
+          :ensure t
+          
+          :hook
+          (org-mode . org-bullets-mode)
+
+          :config
+          (setq org-bullets-face-name (quote org-bullet-face))
+          (add-hook 'org-mode-hook(lambda() (org-bullets-mode 1)))
+          )
+
+  #+end_src
+  #+begin_src emacs-lisp
+    (use-package nyan-mode
+      :ensure t
+      :config
+      (nyan-mode))
+  #+end_src
+  
+** Icons
+  #+BEGIN_SRC emacs-lisp
+    (use-package all-the-icons
+    :ensure t)
+  #+END_SRC
+  
+** NeoTree
+  #+begin_src emacs-lisp
+    (use-package neotree
+      :ensure t
+      :config
+      (define-key global-map (kbd "C-x C-n") 'neotree-toggle)
+      (setq neo-autorefresh nil)
+
+      (defun ntrepos()
+        (interactive)
+        (neo-buffer--change-root default-directory)
+        )
+      )
+
+  #+end_src
+  
+** Completitions
+  #+begin_src emacs-lisp
+    (use-package company
+      :ensure t
+      :defer t
+      :config
+
+    (setq company-idle-delay 0)
+    (setq company-minimum-prefix-length 3)
+    (setq company-selection-wrap-around t)
+    (company-tng-configure-default)
+    (setq company-quickhelp-color-background "#4F4F4F")
+    (setq company-quickhelp-color-foreground "#DCDCCC")
+
+    (global-company-mode 1))
+  #+end_src
+  #+begin_src emacs-lisp
+    (use-package ivy
+      :ensure t
+      :config
+      (ivy-mode 1)
+      (setq ivy-re-builders-alist
+    	'(( swiper . ivy--regex-plus)
+    	  (t . ivy--regex-fuzzy))))
+
+  #+end_src
+  #+begin_src emacs-lisp
+      (use-package swiper
+        :ensure t
+        :config
+        (global-set-key "\C-s" 'swiper))
+  #+end_src
+  
+** Window
+  #+begin_src emacs-lisp
+  (use-package beacon
+    :ensure t
+    :config
+  (beacon-mode 1))
+  #+end_src
+
+** Font
+  #+begin_src emacs-lisp
+  (set-face-attribute 'default nil
+                      :font "JetBrainsMono Nerd Font"
+                      :height 120) ;; 100 = 10pt, 120 = 12pt, 140 = 14pt
+
+  #+end_src
+
+* My Function
+;;Gestisci esportazione automatica del codice elisp tramite org-babel-tangle
+  #+BEGIN_SRC emacs_lisp
+    (defun my/tangle-dotfiles()
+      (interactive)
+      (when (equal (buffer-file-name)
+		   (expand-file-name "~/.config/emacs/dotemacs.org"))
+	(org-babel-tangle)
+	(message "Dotfile tangled")
+      )) 
+  #+END_SRC
+
+* Hooks
+  #+BEGIN_SRC emacs-lisp
+    (add-hook 'after-save-hook #'my/tangle-dotfiles)
+  #+END_SRC
